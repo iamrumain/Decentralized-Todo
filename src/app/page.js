@@ -1,64 +1,161 @@
-import Image from "next/image";
+"use client";
+import { Todo_address, TodoListABI } from "@/constants";
+import { ethers } from "ethers";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState("");
+  const [loading, setLoading] = useState(false);
+  console.log(todos);
+  const connectWallet = async () => {
+    try {
+      if (window.ethereum) {
+        const account = await window.ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        setAccount(account[0]);
+        setIsConnected(true);
+      } else {
+        alert("Please install metamask");
+      }
+    } catch (error) {
+      console.error("Connect is error.....", error);
+    }
+  };
+
+  const getTodos = async () => {
+    try {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const toContract = new ethers.Contract(
+          Todo_address,
+          TodoListABI,
+          signer
+        );
+        const todoCount = await toContract.getTodoCount();
+
+        const fetchTodos = [];
+
+        for (let i = 0; i < todoCount.toNumber(); i++) {
+          const todo = await toContract.getTodoByIndex(i);
+          fetchTodos.push({
+            id: todo[0],
+            text: todo[2],
+            isCompleted: todo[1],
+          });
+        }
+        setTodos(fetchTodos);
+      }
+    } catch (error) {
+      console.error("error fetching todos : ", error);
+    }
+  };
+
+  const addTodo = async (e) => {
+    e.preventDefault();
+
+    if (!newTodo.trim()) return;
+
+    try {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const toContract = new ethers.Contract(
+          Todo_address,
+          TodoListABI,
+          signer
+        );
+
+        const tx = await toContract.createTodo(newTodo);
+        await tx.wait();
+        setNewTodo("");
+        await getTodos();
+        setLoading(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("addTodo error: ", error);
+    }
+  };
+  const toggleTodo = async (id) => {
+    try {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const toContract = new ethers.Contract(
+          Todo_address,
+          TodoListABI,
+          signer
+        );
+
+        const tx = await toContract.toggleCompleted(id);
+        await tx.wait();
+
+        await getTodos();
+        setLoading(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("Toggle Todo error : ", error);
+    }
+  };
+
+  useEffect(() => {
+    connectWallet();
+    if (account) {
+      getTodos();
+    }
+  }, [account]);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div>
+      <main>
+        <h1>Decentralized Todo App</h1>
+
+        {!isConnected ? (
+          <button onClick={connectWallet}>Connect Wallet</button>
+        ) : (
+          <div>
+            <p>Your Account: {account}</p>
+
+            <form onSubmit={addTodo}>
+              <input
+                type="text"
+                value={newTodo}
+                onChange={(e) => setNewTodo(e.target.value)}
+                placeholder="Add new task"
+              />
+
+              <button type="submit" disabled={loading}>
+                {loading ? "Adding.." : "Add Todo"}
+              </button>
+            </form>
+
+            <ul>
+              {todos.length == 0 ? (
+                <p>No task yet, add one!</p>
+              ) : (
+                todos.map((todo) => (
+                  <li key={todo.id.toString()}>
+                    <input
+                      type="checkbox"
+                      checked={todo.isCompleted}
+                      onChange={() => toggleTodo(todo.id)}
+                      disabled={loading}
+                    />
+                    <span>{todo.text}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        )}
       </main>
     </div>
   );
