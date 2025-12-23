@@ -1,7 +1,6 @@
 "use client";
 import { Todo_address, TodoListABI } from "@/constants";
-import { BrowserProvider, Contract } from "ethers";
-
+import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -10,7 +9,6 @@ export default function Home() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   const [loading, setLoading] = useState(false);
-  
   const connectWallet = async () => {
     try {
       if (window.ethereum) {
@@ -20,7 +18,6 @@ export default function Home() {
         setAccount(account[0]);
         setIsConnected(true);
       } else {
-          
         alert("Please install metamask");
       }
     } catch (error) {
@@ -31,10 +28,10 @@ export default function Home() {
   const getTodos = async () => {
     try {
       if (window.ethereum) {
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
-        const toContract = new Contract(
+        const toContract = new ethers.Contract(
           Todo_address,
           TodoListABI,
           signer
@@ -43,7 +40,7 @@ export default function Home() {
 
         const fetchTodos = [];
 
-        for (let i = 0; i < todoCount; i++) {
+        for (let i = 0; i < todoCount.toNumber(); i++) {
           const todo = await toContract.getTodoByIndex(i);
           fetchTodos.push({
             id: todo[0],
@@ -65,10 +62,10 @@ export default function Home() {
 
     try {
       if (window.ethereum) {
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
-        const toContract = new Contract(
+        const toContract = new ethers.Contract(
           Todo_address,
           TodoListABI,
           signer
@@ -88,10 +85,10 @@ export default function Home() {
   const toggleTodo = async (id) => {
     try {
       if (window.ethereum) {
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
-        const toContract = new Contract(
+        const toContract = new ethers.Contract(
           Todo_address,
           TodoListABI,
           signer
@@ -109,32 +106,31 @@ export default function Home() {
     }
   };
 
-    const deleteTodo = async (id) => {
-      try {
-        if (!window.ethereum) return;
-  
-        setLoading(true);
-  
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-  
-        const todoContract = new Contract(
-          Todo_address,
-          TodoListABI,
-          signer
-        );
-  
-        const tx = await todoContract.deleteTodo(id);
-        await tx.wait();
-  
-        await getTodos();
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        console.error("Delete todo error:", error);
-      }
-    };
+  const deleteTodo = async (id) => {
+    try {
+      if (!window.ethereum) return;
 
+      setLoading(true);
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      const todoContract = new ethers.Contract(
+        Todo_address,
+        TodoListABI,
+        signer
+      );
+
+      const tx = await todoContract.deleteTodo(id);
+      await tx.wait();
+
+      await getTodos();
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Delete todo error:", error);
+    }
+  };
 
   useEffect(() => {
     connectWallet();
@@ -171,7 +167,7 @@ export default function Home() {
             </div>
 
             {/* Add Todo */}
-            <form onSubmit={addTodo} className="flex gap-2 mb-5 ">
+            <form onSubmit={addTodo} className="flex gap-2 mb-5">
               <input
                 type="text"
                 value={newTodo}
