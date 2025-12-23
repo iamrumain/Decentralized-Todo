@@ -92,8 +92,8 @@ All todos are permanently stored on the blockchain.
 
 ### 1️⃣ Clone Repository
 ```bash
-git clone https://github.com/iamrumain/Decentralized-Todo-App.git
-cd decentralized-todo-app
+git clone https://github.com/iamrumain/Decentralized-Todo.git
+cd decentralized-todo
 2️⃣ Install Dependencies
 bash
 Copy code
