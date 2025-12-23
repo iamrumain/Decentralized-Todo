@@ -65,26 +65,6 @@ The project is ideal for:
 
 ---
 
-## 🧱 Project Architecture
-
-Decentralized-Todo-App
-│
-├── contracts/
-│ └── TodoList.sol
-│
-├── scripts/
-│ └── deploy.js
-│
-├── constants/
-│ ├── index.js
-│ └── TodoListABI.json
-│
-├── app/
-│ └── page.js
-│
-├── hardhat.config.js
-├── package.json
-└── README.md
 
 
 
